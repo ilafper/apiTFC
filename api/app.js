@@ -23,14 +23,15 @@ const client = new MongoClient(uri, {
   }
 });
 
-let usersCollection; // Referencia a la colección
-
+let usersCollection;
+let mangas;
 async function conectarMongoBBDD() {
   try {
     await client.connect();
     console.log("Conectado a MongoDB Atlas");
     const db = client.db('tfc');
     usersCollection = db.collection('usuarios');
+    mangas = db.collection('mangas');
   } catch (error) {
     console.error("Error al conectar a MongoDB:", error);
   }
@@ -45,6 +46,16 @@ app.get('/api/users', async (req, res) => {
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: 'Error al obtener los usuarios' });
+  }
+});
+
+
+app.get('/api/mangas', async (req, res) => {
+  try {
+    const lista_mangas = await mangas.find().toArray();
+    res.json(lista_mangas);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener los mangas' });
   }
 });
 
