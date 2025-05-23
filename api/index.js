@@ -1,7 +1,8 @@
-// api/index.js
-const app = require('./app'); // Importa la app desde app.js
-const port = process.env.PORT || 5000;
+const app = require('./app');
 
+const port = process.env.PORT || 5000;
 app.listen(port, () => {
-  console.log(`Servidor escuchando en http://localhost:${port}`);
+  /* eslint-disable no-console */
+  console.log(`Listening: http://localhost:${port}`);
+  /* eslint-enable no-console */
 });

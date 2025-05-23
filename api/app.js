@@ -1,19 +1,9 @@
 const express = require('express');
-const morgan = require('morgan');
-const helmet = require('helmet');
-const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
-require('dotenv').config();
-
-const middlewares = require('./middlewares');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
-
-app.use(morgan('dev'));
-app.use(helmet());
-app.use(cors());
 app.use(express.json());
 
-// Conectar con MongoDB
+// Configura la conexión a MongoDB
 const uri = "mongodb+srv://ialfper:ialfper21@alumnos.zoinj.mongodb.net/alumnos?retryWrites=true&w=majority";
 const client = new MongoClient(uri, {
   serverApi: {
@@ -23,44 +13,42 @@ const client = new MongoClient(uri, {
   }
 });
 
-let usersCollection;
-let mangas;
-async function conectarMongoBBDD() {
+// Función para conectar a la base de datos y obtener las colecciones
+async function connectToMongoDB() {
   try {
     await client.connect();
     console.log("Conectado a MongoDB Atlas");
-    const db = client.db('tfc');
-    usersCollection = db.collection('usuarios');
-    mangas = db.collection('mangas');
+    const db = client.db('hospital');
+    return {
+      login: db.collection('usuarios'),
+      citas: db.collection('citas'),
+      pacientes: db.collection('pacientes'),
+      especialistas: db.collection('especialista')
+    };
   } catch (error) {
     console.error("Error al conectar a MongoDB:", error);
+    throw new Error('Error al conectar a la base de datos');
   }
 }
 
-conectarMongoBBDD();
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
 
 // Endpoint GET para obtener usuarios
 app.get('/api/users', async (req, res) => {
   try {
-    const users = await usersCollection.find().toArray();
-    res.json(users);
+    const { login } = await connectToMongoDB();
+    const lista_login = await login.find().toArray();
+    console.log("Usuarios obtenidos:", lista_login);
+    res.json(lista_login);
   } catch (error) {
+    console.error("Error al obtener los usuarios:", error);
     res.status(500).json({ error: 'Error al obtener los usuarios' });
   }
 });
 
-
-app.get('/api/mangas', async (req, res) => {
-  try {
-    const lista_mangas = await mangas.find().toArray();
-    res.json(lista_mangas);
-  } catch (error) {
-    res.status(500).json({ error: 'Error al obtener los mangas' });
-  }
-});
-
-
-app.use(middlewares.notFound);
-app.use(middlewares.errorHandler);
-// Exporta la app para usarla en otros archivos
 module.exports = app;
