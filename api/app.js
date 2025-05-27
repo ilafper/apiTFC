@@ -66,5 +66,31 @@ app.post('/api/checkLogin', async (req, res) => {
   }
 });
 
+app.post('/api/registrarse', async (req, res) => {
+  try {
+    const { nombre, email, password1} = req.body;
 
+    // Validación básica
+    if (!nombre || !email || !password1) {
+      return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
+    }
+
+    // Conectar a la base de datos y acceder a la colección
+    const { usuarios } = await connectToMongoDB();
+
+    // Crear el nuevo especialista
+    const nuevoUser = {
+      nombre,
+      email,
+      password1
+    };
+
+    await nuevoUser.insertOne(usuarios);
+
+    res.status(201).json({ mensaje: "Especialista creado correctamente" });
+  } catch (error) {
+    console.error("Error al crear el especialista:", error);
+    res.status(500).json({ mensaje: "Error al crear el especialista" });
+  }
+});
 module.exports = app;
