@@ -76,7 +76,7 @@ app.post('/api/registrarse', async (req, res) => {
     }
 
     // Conectar a la base de datos y acceder a la colección
-    const { usuarios } = await connectToMongoDB();
+    const { login } = await connectToMongoDB();
 
     // Crear el nuevo especialista
     const nuevoUser = {
@@ -85,7 +85,7 @@ app.post('/api/registrarse', async (req, res) => {
       password1
     };
 
-    await nuevoUser.insertOne(usuarios);
+    await nuevoUser.insertOne(login);
 
     res.status(201).json({ mensaje: "Especialista creado correctamente" });
   } catch (error) {
