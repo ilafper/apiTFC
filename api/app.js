@@ -18,12 +18,12 @@ async function connectToMongoDB() {
   try {
     await client.connect();
     console.log("Conectado a MongoDB Atlas");
-    const db = client.db('hospital');
+    const db = client.db('tfc');
     return {
       login: db.collection('usuarios'),
-      citas: db.collection('citas'),
-      pacientes: db.collection('pacientes'),
-      especialistas: db.collection('especialista')
+      // citas: db.collection('citas'),
+      // pacientes: db.collection('pacientes'),
+      // especialistas: db.collection('especialista')
     };
   } catch (error) {
     console.error("Error al conectar a MongoDB:", error);
@@ -38,17 +38,33 @@ app.use((req, res, next) => {
   next();
 });
 
-// Endpoint GET para obtener usuarios
-app.get('/api/users', async (req, res) => {
+
+// parte para encontrar al usuario del login
+app.post('/api/checkLogin', async (req, res) => {
   try {
+    const { nombre, password } = req.body;
+
+    // Validación de campos
+    if (!nombre || !password) {
+      return res.status(400).json({ mensaje: "Nombre y contraseña son requeridos" });
+    }
+
     const { login } = await connectToMongoDB();
-    const lista_login = await login.find().toArray();
-    console.log("Usuarios obtenidos:", lista_login);
-    res.json(lista_login);
+
+    // Buscar usuario por nombre y contraseña (en texto plano)
+    const usuarioEncontrado = await login.findOne({ nombre, contrasenha: password });
+
+    if (usuarioEncontrado) {
+      res.json({ mensaje: "Inicio de sesión exitoso", usuario: usuarioEncontrado.nombre });
+    } else {
+      res.status(401).json({ mensaje: "Nombre o contraseña incorrecta" });
+    }
+
   } catch (error) {
-    console.error("Error al obtener los usuarios:", error);
-    res.status(500).json({ error: 'Error al obtener los usuarios' });
+    console.error("Error en checkLogin:", error.message);
+    res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 });
+
 
 module.exports = app;
