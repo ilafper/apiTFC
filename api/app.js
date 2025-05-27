@@ -80,9 +80,9 @@ app.post('/api/registrarse', async (req, res) => {
 
     // Crear el nuevo especialista
     const nuevoUser = {
-      nombre,
-      email,
-      password1
+      nombre:nombre,
+      email:email,
+      contrasenha:password1
     };
 
     await nuevoUser.insertOne(login);
