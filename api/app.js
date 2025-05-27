@@ -71,7 +71,7 @@ app.post('/api/registrarse', async (req, res) => {
     const { nombre, email, password1} = req.body;
 
     // Validación básica
-    if (!nombre || !email || !password1) {
+    if (!nombre || !email || !password1 ) {
       return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
     }
 
