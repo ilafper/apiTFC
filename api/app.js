@@ -83,7 +83,7 @@ app.post('/api/registrarse', async (req, res) => {
     const nuevoUser = {
       nombre:nombre,
       email:email,
-      contrasena:password1
+      contrasenha:password1
     };
 
     await login.insertOne(nuevoUser);
