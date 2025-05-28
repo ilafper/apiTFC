@@ -85,7 +85,7 @@ app.post('/api/registrarse', async (req, res) => {
       password1
     };
 
-    await nuevoUser.insertOne(login);
+    await login.insertOne(nuevoUser);
 
     res.status(201).json({ mensaje: "Especialista creado correctamente" });
   } catch (error) {
