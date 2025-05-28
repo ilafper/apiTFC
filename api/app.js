@@ -56,9 +56,9 @@ app.post('/api/checkLogin', async (req, res) => {
     const usuarioEncontrado = await login.findOne({ nombre:nombre, contrasenha: password });
 
     if (usuarioEncontrado) {
-      //res.json({ mensaje: "Inicio de sesión exitoso", usuario: usuarioEncontrado.nombre });
+      res.json({ mensaje: "Inicio de sesión exitoso", usuario: usuarioEncontrado.nombre });
     } else {
-      //res.status(401).json({ mensaje: "Nombre o contraseña incorrecta" });
+      res.status(401).json({ mensaje: "Nombre o contraseña incorrecta" });
     }
 
   } catch (error) {
