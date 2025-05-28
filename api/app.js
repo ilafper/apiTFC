@@ -53,7 +53,7 @@ app.post('/api/checkLogin', async (req, res) => {
     const { login } = await connectToMongoDB();
 
     // Buscar usuario por nombre y contraseña (en texto plano)
-    const usuarioEncontrado = await login.findOne({ nombre, contrasenha: password });
+    const usuarioEncontrado = await login.findOne({ nombre:nombre, contrasenha: password });
 
     if (usuarioEncontrado) {
       //res.json({ mensaje: "Inicio de sesión exitoso", usuario: usuarioEncontrado.nombre });
