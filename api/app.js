@@ -65,7 +65,7 @@ app.post('/api/checkLogin', async (req, res) => {
     res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 });
-
+/* */
 app.post('/api/registrarse', async (req, res) => {
   try {
     const { nombre, email, password1} = req.body;
@@ -80,9 +80,9 @@ app.post('/api/registrarse', async (req, res) => {
 
     // Crear el nuevo especialista
     const nuevoUser = {
-      nombre:nombre,
-      email:email,
-      contrasenha:password1
+      nombre,
+      email,
+      password1
     };
 
     await nuevoUser.insertOne(login);
