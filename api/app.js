@@ -21,6 +21,7 @@ async function connectToMongoDB() {
     const db = client.db('tfc');
     return {
       login: db.collection('usuarios'),
+      mangas: db.collection('mangas'),
       // citas: db.collection('citas'),
       // pacientes: db.collection('pacientes'),
       // especialistas: db.collection('especialista')
@@ -65,7 +66,7 @@ app.post('/api/checkLogin', async (req, res) => {
     res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 });
-/* */
+/* endpoint para crear nuevo usuario*/
 app.post('/api/registrarse', async (req, res) => {
   try {
     const { nombre, email, password1} = req.body;
@@ -91,6 +92,17 @@ app.post('/api/registrarse', async (req, res) => {
   } catch (error) {
     console.error("Error al crear el especialista:", error);
     res.status(500).json({ mensaje: "Error al crear el especialista" });
+  }
+
+});
+
+app.get('/api/mangas', async (req, res) => {
+  try {
+    const { mangas } = await connectToMongoDB();
+    const lista_mangas = await mangas.find().toArray();
+    res.json(lista_mangas);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener los especialistas' });
   }
 });
 module.exports = app;
