@@ -105,4 +105,37 @@ app.get('/api/mangas', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener los especialistas' });
   }
 });
+
+
+
+
+
+app.get('/api/mangas/buscar', async (req, res) => {
+  try {
+    const { nombre } = req.query; // recibe ?nombre=texto
+
+    // Si no se pasa ningún nombre, devolvemos error
+    if (!nombre || nombre.trim() === "") {
+      return res.status(400).json({ mensaje: "El parámetro 'nombre' es obligatorio" });
+    }
+
+    const { mangas } = await connectToMongoDB();
+
+    // Usamos expresión regular para búsqueda parcial, sin distinguir mayúsculas/minúsculas
+    const filtro = { nombre: { $regex: nombre, $options: "i" } };
+
+    const resultados = await mangas.find(filtro).toArray();
+
+    if (resultados.length === 0) {
+      return res.status(404).json({ mensaje: "No se encontraron mangas con ese nombre" });
+    }
+
+    res.status(200).json(resultados);
+  } catch (error) {
+    console.error("Error al buscar mangas:", error);
+    res.status(500).json({ mensaje: "Error interno al buscar mangas" });
+  }
+});
+
+
 module.exports = app;
