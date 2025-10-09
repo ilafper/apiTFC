@@ -16,7 +16,7 @@ const client = new MongoClient(uri, {
 // Función para conectar a la base de datos y obtener las colecciones
 async function connectToMongoDB() {
   try {
-    await client.connect();
+    client.connect();
     console.log("Conectado a MongoDB Atlas");
     const db = client.db('tfc');
     return {
@@ -45,15 +45,10 @@ app.post('/api/checkLogin', async (req, res) => {
   try {
     const { nombre, password } = req.body;
 
-    // Validación de campos
-    if (!nombre || !password) {
-      return res.status(400).json({ mensaje: "Nombre y contraseña son requeridos" });
-    }
-
-    const { login } = await connectToMongoDB();
+    const { login } = connectToMongoDB();
 
     // Buscar usuario por nombre y contraseña (en texto plano)
-    const usuarioEncontrado = await login.findOne({ nombre:nombre, contrasenha: password });
+    const usuarioEncontrado = login.findOne({ nombre:nombre, contrasenha: password });
 
     if (usuarioEncontrado) {
       res.json({ mensaje: "Inicio de sesión exitoso", usuario: usuarioEncontrado.nombre });
@@ -66,35 +61,35 @@ app.post('/api/checkLogin', async (req, res) => {
     res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 });
-/* endpoint para crear nuevo usuario*/
-app.post('/api/registrarse', async (req, res) => {
-  try {
-    const { nombre, email, password1} = req.body;
 
-    // Validación básica
-    if (!nombre || !email || !password1) {
-      return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
-    }
+// app.post('/api/registrarse', async (req, res) => {
+//   try {
+//     const { nombre, email, password1} = req.body;
 
-    // Conectar a la base de datos y acceder a la colección
-    const { login } = await connectToMongoDB();
+//     // Validación básica
+//     if (!nombre || !email || !password1) {
+//       return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
+//     }
 
-    // Crear el nuevo especialista
-    const nuevoUser = {
-      nombre:nombre,
-      email:email,
-      contrasenha:password1
-    };
+//     // Conectar a la base de datos y acceder a la colección
+//     const { login } = await connectToMongoDB();
 
-    await login.insertOne(nuevoUser);
+//     // Crear el nuevo especialista
+//     const nuevoUser = {
+//       nombre:nombre,
+//       email:email,
+//       contrasenha:password1
+//     };
 
-    res.status(201).json({ mensaje: "Especialista creado correctamente" });
-  } catch (error) {
-    console.error("Error al crear el especialista:", error);
-    res.status(500).json({ mensaje: "Error al crear el especialista" });
-  }
+//     await login.insertOne(nuevoUser);
 
-});
+//     res.status(201).json({ mensaje: "Especialista creado correctamente" });
+//   } catch (error) {
+//     console.error("Error al crear el especialista:", error);
+//     res.status(500).json({ mensaje: "Error al crear el especialista" });
+//   }
+
+// });
 
 app.get('/api/mangas', async (req, res) => {
   try {
@@ -111,10 +106,9 @@ app.get('/api/mangas', async (req, res) => {
 app.get('/api/mangas/buscar', async (req, res) => {
   try {
     const { nombre } = req.query; // recibe ?nombre=texto
-    const { mangas } = await connectToMongoDB();
+    const { mangas } = connectToMongoDB();
 
-
-    // Usamos expresión regular para búsqueda parcial, sin distinguir mayúsculas/minúsculas
+    
     const filtro = { nombre: { $regex: nombre, $options: "i" } };
     const resultados = await mangas.find(filtro).toArray();
 
