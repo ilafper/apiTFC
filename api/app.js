@@ -20,6 +20,7 @@ async function connectToMongoDB() {
     console.log("Conectado a MongoDB Atlas");
     const db = client.db('tfc');
     return {
+
       login: db.collection('usuarios'),
       mangas: db.collection('mangas'),
       // citas: db.collection('citas'),
@@ -41,7 +42,7 @@ app.use((req, res, next) => {
 
 
 // parte para encontrar al usuario del login
-app.post('/api/checkLogin', async (req, res) => {
+app.get('/api/checkLogin', async (req, res) => {
   try {
     const { nombre, password } = req.body;
 
@@ -61,6 +62,8 @@ app.post('/api/checkLogin', async (req, res) => {
     res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 });
+
+
 
 // app.post('/api/registrarse', async (req, res) => {
 //   try {
