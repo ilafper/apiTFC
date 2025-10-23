@@ -1,9 +1,8 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion } = require('mongodb');
 const app = express();
 app.use(express.json());
 
-// Configura la conexión a MongoDB
 const uri = "mongodb+srv://ialfper:ialfper21@alumnos.zoinj.mongodb.net/alumnos?retryWrites=true&w=majority";
 const client = new MongoClient(uri, {
   serverApi: {
@@ -13,19 +12,14 @@ const client = new MongoClient(uri, {
   }
 });
 
-// Función para conectar a la base de datos y obtener las colecciones
 async function connectToMongoDB() {
   try {
-    client.connect();
+    await client.connect();
     console.log("Conectado a MongoDB Atlas");
     const db = client.db('tfc');
     return {
-
       login: db.collection('usuarios'),
-      mangas: db.collection('mangas'),
-      // citas: db.collection('citas'),
-      // pacientes: db.collection('pacientes'),
-      // especialistas: db.collection('especialista')
+      mangas: db.collection('mangas')
     };
   } catch (error) {
     console.error("Error al conectar a MongoDB:", error);
@@ -40,16 +34,20 @@ app.use((req, res, next) => {
   next();
 });
 
-
-// parte para encontrar al usuario del login
-app.get('/api/checkLogin', async (req, res) => {
+app.post('/api/checkLogin', async (req, res) => {
   try {
     const { nombre, password } = req.body;
 
-    const { login } = connectToMongoDB();
+    if (!nombre || !password) {
+      return res.status(400).json({ mensaje: "Faltan datos" });
+    }
 
-    // Buscar usuario por nombre y contraseña (en texto plano)
-    const usuarioEncontrado = login.findOne({ nombre:nombre, contrasenha: password });
+    const { login } = await connectToMongoDB();
+
+    const usuarioEncontrado = await login.findOne({
+      nombre: nombre,
+      contrasenha: password
+    });
 
     if (usuarioEncontrado) {
       res.json({ mensaje: "Inicio de sesión exitoso", usuario: usuarioEncontrado.nombre });
@@ -62,7 +60,6 @@ app.get('/api/checkLogin', async (req, res) => {
     res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 });
-
 
 
 // app.post('/api/registrarse', async (req, res) => {
