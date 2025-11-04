@@ -107,25 +107,25 @@ app.get('/api/mangas', async (req, res) => {
 
 app.get('/api/mangas/buscar', async (req, res) => {
   try {
-    const { nombre } = req.query; // Extraer el nombre desde la query string
+    const { nombre } = req.query;
 
-    // Si no hay parámetro nombre, devolvemos un array vacío (no es un error)
     if (!nombre || typeof nombre !== 'string' || nombre.trim() === '') {
       return res.status(200).json([]);
     }
 
-    const mangas = await connectToMongoDB(); // Asegúrate de que devuelve la colección
-    const filtro = { nombre: { $regex: nombre.trim(), $options: 'i' } }; // búsqueda parcial, sin distinguir mayúsculas
+    // 👇 Desestructura directamente la colección "mangas"
+    const { mangas } = await connectToMongoDB(); 
 
+    const filtro = { nombre: { $regex: nombre.trim(), $options: 'i' } };
     const resultados = await mangas.find(filtro).toArray();
 
-    // Siempre devolver 200 OK, incluso si no hay resultados
     return res.status(200).json(resultados);
   } catch (error) {
     console.error('Error al buscar mangas:', error);
     return res.status(500).json({ mensaje: 'Error interno al buscar mangas' });
   }
 });
+
 
 
 
