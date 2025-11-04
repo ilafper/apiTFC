@@ -100,7 +100,9 @@ app.get('/api/mangas', async (req, res) => {
     res.status(500).json({ error: 'Error al obtener los especialistas' });
   }
 });
-jj
+
+
+
 //BUSCAR MANGAS
 app.get('/api/mangas/buscar', async (req, res) => {
   try {
