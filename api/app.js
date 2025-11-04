@@ -104,30 +104,29 @@ app.get('/api/mangas', async (req, res) => {
 
 
 //BUSCAR MANGAS
+
 app.get('/api/mangas/buscar', async (req, res) => {
   try {
-    const { nombre } = req.query; // ✅ Extraer solo el valor del query param
-    
-    if (!nombre) {
-      return res.status(400).json({ mensaje: "Falta el parámetro 'nombre' en la búsqueda" });
+    const { nombre } = req.query; // Extraer el nombre desde la query string
+
+    // Si no hay parámetro nombre, devolvemos un array vacío (no es un error)
+    if (!nombre || typeof nombre !== 'string' || nombre.trim() === '') {
+      return res.status(200).json([]);
     }
 
-    const mangas = await connectToMongoDB();
+    const mangas = await connectToMongoDB(); // Asegúrate de que devuelve la colección
+    const filtro = { nombre: { $regex: nombre.trim(), $options: 'i' } }; // búsqueda parcial, sin distinguir mayúsculas
 
-    const filtro = { nombre: { $regex: nombre, $options: "i" } };
-  
     const resultados = await mangas.find(filtro).toArray();
 
-    if (resultados.length === 0) {
-      return res.status(404).json({ mensaje: "No se encontraron mangas con ese nombre" });
-    }
-
-    res.status(200).json(resultados);
+    // Siempre devolver 200 OK, incluso si no hay resultados
+    return res.status(200).json(resultados);
   } catch (error) {
-    console.error("Error al buscar mangas:", error);
-    res.status(500).json({ mensaje: "Error interno al buscar mangas" });
+    console.error('Error al buscar mangas:', error);
+    return res.status(500).json({ mensaje: 'Error interno al buscar mangas' });
   }
 });
+
 
 
 
