@@ -12,6 +12,9 @@ const client = new MongoClient(uri, {
   }
 });
 
+
+
+
 async function connectToMongoDB() {
   try {
     await client.connect();
