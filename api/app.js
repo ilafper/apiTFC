@@ -19,7 +19,7 @@ async function connectToMongoDB() {
     const db = client.db('tfc');
     return {
       login: db.collection('usuarios'),
-      mangas: db.collection('mangas')
+      mangas: db.collection('mangasPrueba')
     };
   } catch (error) {
     console.error("Error al conectar a MongoDB:", error);
@@ -114,7 +114,7 @@ app.get('/api/mangas/buscar', async (req, res) => {
     }
 
     // 👇 Desestructura directamente la colección "mangas"
-    const { mangas } = await connectToMongoDB(); 
+    const { mangas } = await connectToMongoDB();
 
     const filtro = { nombre: { $regex: nombre.trim(), $options: 'i' } };
     const resultados = await mangas.find(filtro).toArray();
