@@ -114,11 +114,7 @@ app.get('/api/mangas/buscar', async (req, res) => {
   try {
     const { nombre } = req.query; // recibe ?nombre=texto
 
-    // Si no se pasa ningún nombre, devolvemos error
-    if (!nombre || nombre.trim() === "") {
-      return res.status(400).json({ mensaje: "El parámetro 'nombre' es obligatorio" });
-    }
-
+    
     const { mangas } = await connectToMongoDB();
 
     // Usamos expresión regular para búsqueda parcial, sin distinguir mayúsculas/minúsculas
