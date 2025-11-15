@@ -38,33 +38,39 @@ app.use((req, res, next) => {
   next();
 });
 
-
-// parte para encontrar al usuario del login
 app.post('/api/checkLogin', async (req, res) => {
   try {
     const { nombre, password } = req.body;
 
-    // Validación de campos
     if (!nombre || !password) {
       return res.status(400).json({ mensaje: "Nombre y contraseña son requeridos" });
     }
 
     const { login } = await connectToMongoDB();
 
-    // Buscar usuario por nombre y contraseña (en texto plano)
     const usuarioEncontrado = await login.findOne({ nombre, contrasenha: password });
 
     if (usuarioEncontrado) {
-      //res.json({ mensaje: "Inicio de sesión exitoso", usuario: usuarioEncontrado.nombre });
+      // Enviamos datos del usuario al frontend
+      res.json({
+        mensaje: "Inicio de sesión exitoso",
+        usuario: {
+          nombre: usuarioEncontrado.nombre,
+          apellido: usuarioEncontrado.apellido,
+          email: usuarioEncontrado.email,
+          pasw: usuarioEncontrado.pasw,
+          _id: usuarioEncontrado._id
+        }
+      });
     } else {
-      //res.status(401).json({ mensaje: "Nombre o contraseña incorrecta" });
+      res.status(401).json({ mensaje: "Nombre o contraseña incorrecta" });
     }
-
   } catch (error) {
     console.error("Error en checkLogin:", error.message);
     res.status(500).json({ mensaje: "Error interno del servidor" });
   }
 });
+
 
 app.post('/api/registrarse', async (req, res) => {
   try {
