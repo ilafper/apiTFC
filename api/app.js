@@ -136,6 +136,32 @@ app.get('/api/mangas/buscar', async (req, res) => {
 
 
 
+app.post('/api/gustarManga', async (req, res) => {
 
+  try {
+    const { usuarioId, mangaId } = req.body;
+
+    if (!usuarioId || !mangaId) {
+      return res.status(400).json({ mensaje: "Faltan datos" });
+    }
+
+    const { login } = await connectToMongoDB();
+
+
+     // Agregar el manga al array lista_Fav si no existe
+    const mangaGustadoAñadido = await login.updateOne(
+      { _id: new ObjectId(usuarioId) },
+      { $addToSet: { lista_Fav: new ObjectId(mangaId) } } // $addToSet evita duplicados
+    );
+
+    res.json({ mensaje: "Manga añadido a favoritos", mangaGustadoAñadido });
+
+  } catch (error) {
+    console.error("Error en gustarManga:", error.message);
+    res.status(500).json({ mensaje: "Error interno del servidor" });
+  }
+
+});
+  
 
 module.exports = app;
