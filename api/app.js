@@ -139,7 +139,6 @@ app.get('/api/mangas/buscar', async (req, res) => {
 
 
 app.post('/api/gustarManga', async (req, res) => {
-
   try {
     const { usuarioId, mangaId } = req.body;
 
@@ -149,20 +148,36 @@ app.post('/api/gustarManga', async (req, res) => {
 
     const { login } = await connectToMongoDB();
 
+    // Buscar usuario
+    const usuario = await login.findOne({ _id: new ObjectId(usuarioId) });
+    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
 
-    const mangaGustadoAñadido = await login.updateOne(
+    let lista_Fav = usuario.lista_Fav || [];
+    let accion = "";
+
+    if (lista_Fav.some(id => id.toString() === mangaId)) {
+      // Si ya está, eliminarlo
+      lista_Fav = lista_Fav.filter(id => id.toString() !== mangaId);
+      accion = "eliminado";
+    } else {
+      // Si no está, agregarlo
+      lista_Fav.push(new ObjectId(mangaId));
+      accion = "añadido";
+    }
+
+    // Actualizar en la base de datos
+    await login.updateOne(
       { _id: new ObjectId(usuarioId) },
-      { $addToSet: { lista_Fav: new ObjectId(mangaId) } } // $addToSet evita duplicados
+      { $set: { lista_Fav } }
     );
 
-    res.json({ mensaje: "Manga añadido a favoritos", mangaGustadoAñadido });
+    res.json({ mensaje: `Manga ${accion} a favoritos`, lista_Fav });
 
   } catch (error) {
     console.error("Error en gustarManga:", error.message);
     res.status(500).json({ mensaje: "Error interno del servidor" });
   }
-
 });
-  
+
 
 module.exports = app;
