@@ -53,7 +53,6 @@ app.post('/api/checkLogin', async (req, res) => {
     if (usuarioEncontrado) {
       // Enviamos datos del usuario al frontend
       res.json({
-        mensaje: "Inicio de sesión exitoso",
         usuario: {
           nombre: usuarioEncontrado.nombre,
           email: usuarioEncontrado.email,
@@ -61,6 +60,9 @@ app.post('/api/checkLogin', async (req, res) => {
           lista_Fav: usuarioEncontrado.lista_Fav || []
         }
       });
+
+
+
     } else {
       res.status(401).json({ mensaje: "Nombre o contraseña incorrecta" });
     }
@@ -122,7 +124,6 @@ app.get('/api/mangas/buscar', async (req, res) => {
       return res.status(200).json([]);
     }
 
-    // 👇 Desestructura directamente la colección "mangas"
     const { mangas } = await connectToMongoDB();
 
     const filtro = { nombre: { $regex: nombre.trim(), $options: 'i' } };
