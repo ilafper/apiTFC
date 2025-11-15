@@ -57,7 +57,8 @@ app.post('/api/checkLogin', async (req, res) => {
         usuario: {
           nombre: usuarioEncontrado.nombre,
           email: usuarioEncontrado.email,
-          _id: usuarioEncontrado._id
+          _id: usuarioEncontrado._id,
+          lista_Fav: usuarioEncontrado.lista_Fav || []
         }
       });
     } else {
@@ -148,7 +149,6 @@ app.post('/api/gustarManga', async (req, res) => {
     const { login } = await connectToMongoDB();
 
 
-     // Agregar el manga al array lista_Fav si no existe
     const mangaGustadoAñadido = await login.updateOne(
       { _id: new ObjectId(usuarioId) },
       { $addToSet: { lista_Fav: new ObjectId(mangaId) } } // $addToSet evita duplicados
