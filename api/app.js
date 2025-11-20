@@ -145,131 +145,89 @@ app.get('/api/mangas/buscar', async (req, res) => {
 
 
 
-
 app.post('/api/gustarManga', async (req, res) => {
   try {
-    const { usuarioId, manga } = req.body; 
+    const { usuarioId, manga } = req.body; // ← CAMBIO: 'manga' en lugar de 'mangaId'
 
-    // Validaciones
     if (!usuarioId || !manga) {
       return res.status(400).json({ mensaje: "Faltan datos (usuarioId, manga)" });
     }
 
     const { login } = await connectToMongoDB();
-
-    // Buscar usuario
     const usuario = await login.findOne({ _id: new ObjectId(usuarioId) });
     if (!usuario) {
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
     let lista_Fav = usuario.lista_Fav || [];
-    let capitulos_vistos = usuario.capitulos_vistos || []; // ← NUEVO
-    let accion = "";
+    let capitulos_vistos = usuario.capitulos_vistos || [];
 
-    // Buscar si el manga ya está en favoritos (comparar por _id)
+    // Buscar por _id del manga (objeto completo)
     const index = lista_Fav.findIndex(fav => {
-      // Manejar tanto objetos como IDs (compatibilidad con datos antiguos)
       const favId = typeof fav === 'object' && fav._id ? fav._id.toString() : fav.toString();
       return favId === manga._id.toString();
     });
 
     if (index > -1) {
-      // Si ya está, eliminarlo (toggle off)
       lista_Fav.splice(index, 1);
-      accion = "eliminado";
     } else {
-      // Si no está, agregarlo como OBJETO COMPLETO (toggle on)
-      lista_Fav.push(manga);
-      accion = "añadido";
+      lista_Fav.push(manga); // ← Guardar objeto completo
     }
 
-    // Actualizar en la base de datos
     await login.updateOne(
       { _id: new ObjectId(usuarioId) },
-      { 
-        $set: { 
-          lista_Fav,
-          capitulos_vistos // ← Asegurar que exista el campo
-        } 
-      }
+      { $set: { lista_Fav, capitulos_vistos } }
     );
 
-    res.json({ 
-      mensaje: `Manga ${accion} a favoritos`, 
-      lista_Fav,
-      capitulos_vistos
-    });
-
+    res.json({ mensaje: "Actualizado", lista_Fav, capitulos_vistos });
   } catch (error) {
-    console.error("Error en gustarManga:", error.message);
-    res.status(500).json({ mensaje: "Error interno del servidor" });
+    console.error("Error:", error.message);
+    res.status(500).json({ mensaje: "Error interno" });
   }
 });
-
 
 
 app.post('/api/marcarCapituloVisto', async (req, res) => {
   try {
     const { usuarioId, mangaId, tomo, visto } = req.body;
 
-    // Validaciones
     if (!usuarioId || !mangaId || tomo === undefined || visto === undefined) {
-      return res.status(400).json({ 
-        mensaje: "Faltan datos (usuarioId, mangaId, tomo, visto)" 
-      });
+      return res.status(400).json({ mensaje: "Faltan datos" });
     }
 
     const { login } = await connectToMongoDB();
-
-    // Buscar usuario
     const usuario = await login.findOne({ _id: new ObjectId(usuarioId) });
     if (!usuario) {
       return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
-    // Inicializar el array si no existe
     let capitulos_vistos = usuario.capitulos_vistos || [];
 
-    // Buscar si ya existe un registro para este manga y tomo
     const index = capitulos_vistos.findIndex(
       cv => cv.mangaId === mangaId && cv.tomo === tomo
     );
 
     if (visto) {
-      // Marcar como visto
       if (index > -1) {
-        // Actualizar existente
         capitulos_vistos[index].visto = true;
       } else {
-        // Agregar nuevo registro
-        capitulos_vistos.push({
-          mangaId: mangaId,
-          tomo: tomo,
-          visto: true
-        });
+        capitulos_vistos.push({ mangaId, tomo, visto: true });
       }
     } else {
-      // Desmarcar como visto (eliminar del array)
       if (index > -1) {
         capitulos_vistos.splice(index, 1);
       }
     }
 
-    // Actualizar en la base de datos
     await login.updateOne(
       { _id: new ObjectId(usuarioId) },
       { $set: { capitulos_vistos } }
     );
 
-    res.json({ 
-      mensaje: `Tomo ${tomo} ${visto ? 'marcado' : 'desmarcado'} como visto`,
-      capitulos_vistos
-    });
-
+    res.json({ mensaje: "Actualizado", capitulos_vistos });
   } catch (error) {
-    console.error("Error en marcarCapituloVisto:", error.message);
-    res.status(500).json({ mensaje: "Error interno del servidor" });
+    console.error("Error:", error.message);
+    res.status(500).json({ mensaje: "Error interno" });
   }
 });
 
