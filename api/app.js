@@ -38,9 +38,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// ============================================
-// ENDPOINT: LOGIN
-// ============================================
 app.post('/api/checkLogin', async (req, res) => {
   try {
     const { nombre, password } = req.body;
