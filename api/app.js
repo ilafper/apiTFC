@@ -51,7 +51,7 @@ app.post('/api/checkLogin', async (req, res) => {
     const usuarioEncontrado = await login.findOne({ nombre, contrasenha: password });
 
     if (usuarioEncontrado) {
-      // ✅ MODIFICADO: Ahora incluye capitulos_vistos
+      
       res.json({
         usuario: {
           nombre: usuarioEncontrado.nombre,
