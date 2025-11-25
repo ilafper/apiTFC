@@ -80,7 +80,7 @@ app.post('/api/registrarse', async (req, res) => {
     // Conectar a la base de datos y acceder a la colección
     const { login } = await connectToMongoDB();
 
-    // Verificar si el usuario ya existe
+    //buscar si hay otro igual
     const usuarioExistente = await login.findOne({ 
       $or: [
         { nombre: nombre },
