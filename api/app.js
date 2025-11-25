@@ -48,19 +48,17 @@ app.post('/api/checkLogin', async (req, res) => {
     const usuarioEncontrado = await login.findOne({ nombre, contrasenha: password });
 
     if (usuarioEncontrado) {
-      // Enviamos datos del usuario al frontend
+      
       res.json({
         usuario: {
           nombre: usuarioEncontrado.nombre,
           rol:usuarioEncontrado.rol || 'user',
           email: usuarioEncontrado.email,
           _id: usuarioEncontrado._id,
-          lista_Fav: usuarioEncontrado.lista_Fav || []
+          lista_Fav: usuarioEncontrado.lista_Fav || [],
+          capitulos_vistos: usuarioEncontrado.capitulos_vistos || [] // ← NUEVO
         }
       });
-
-
-
     } else {
       res.status(401).json({ mensaje: "Nombre o contraseña incorrecta" });
     }
@@ -87,32 +85,38 @@ app.post('/api/checkLogin', async (req, res) => {
 //     const nuevoUser = {
 //       nombre:nombre,
 //       email:email,
-//       contrasenha:password1
+//       contrasenha:password1,
+//       lista_Fav: [],               // ← Inicializar arrays
+//       capitulos_vistos: []         // ← NUEVO
 //     };
 
 //     await login.insertOne(nuevoUser);
 
-//     res.status(201).json({ mensaje: "Especialista creado correctamente" });
+//     res.status(201).json({ mensaje: "Usuario creado correctamente" });
 //   } catch (error) {
-//     console.error("Error al crear el especialista:", error);
-//     res.status(500).json({ mensaje: "Error al crear el especialista" });
+//     console.error("Error al crear el usuario:", error);
+//     res.status(500).json({ mensaje: "Error al crear el usuario" });
 //   }
 // });
 
+// ============================================
+// ENDPOINT: OBTENER TODOS LOS MANGAS
+// ============================================
 app.get('/api/mangas', async (req, res) => {
   try {
     const { mangas } = await connectToMongoDB();
     const lista_mangas = await mangas.find().toArray();
     res.json(lista_mangas);
   } catch (error) {
-    res.status(500).json({ error: 'Error al obtener los especialistas' });
+    res.status(500).json({ error: 'Error al obtener los mangas' });
   }
 });
 
 
 
-//BUSCAR MANGAS
-
+// ============================================
+// ENDPOINT: BUSCAR MANGAS
+// ============================================
 app.get('/api/mangas/buscar', async (req, res) => {
   try {
     const { nombre } = req.query;
@@ -137,42 +141,87 @@ app.get('/api/mangas/buscar', async (req, res) => {
 
 app.post('/api/gustarManga', async (req, res) => {
   try {
-    const { usuarioId, mangaId } = req.body;
+    const { usuarioId, manga } = req.body; // ← CAMBIO: 'manga' en lugar de 'mangaId'
 
-    if (!usuarioId || !mangaId) {
+    if (!usuarioId || !manga) {
+      return res.status(400).json({ mensaje: "Faltan datos (usuarioId, manga)" });
+    }
+
+    const { login } = await connectToMongoDB();
+    const usuario = await login.findOne({ _id: new ObjectId(usuarioId) });
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
+    }
+
+    let lista_Fav = usuario.lista_Fav || [];
+    let capitulos_vistos = usuario.capitulos_vistos || [];
+
+    // Buscar por _id del manga (objeto completo)
+    const index = lista_Fav.findIndex(fav => {
+      const favId = typeof fav === 'object' && fav._id ? fav._id.toString() : fav.toString();
+      return favId === manga._id.toString();
+    });
+
+    if (index > -1) {
+      lista_Fav.splice(index, 1);
+    } else {
+      lista_Fav.push(manga); // ← Guardar objeto completo
+    }
+
+    await login.updateOne(
+      { _id: new ObjectId(usuarioId) },
+      { $set: { lista_Fav, capitulos_vistos } }
+    );
+
+    res.json({ mensaje: "Actualizado", lista_Fav, capitulos_vistos });
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ mensaje: "Error interno" });
+  }
+});
+
+
+app.post('/api/marcarCapituloVisto', async (req, res) => {
+  try {
+    const { usuarioId, mangaId, tomo, visto } = req.body;
+
+    if (!usuarioId || !mangaId || tomo === undefined || visto === undefined) {
       return res.status(400).json({ mensaje: "Faltan datos" });
     }
 
     const { login } = await connectToMongoDB();
-
-    // Buscar usuario
     const usuario = await login.findOne({ _id: new ObjectId(usuarioId) });
-    if (!usuario) return res.status(404).json({ mensaje: "Usuario no encontrado" });
-
-    let lista_Fav = usuario.lista_Fav || [];
-    let accion = "";
-
-    if (lista_Fav.some(id => id.toString() === mangaId)) {
-      // Si ya está, eliminarlo
-      lista_Fav = lista_Fav.filter(id => id.toString() !== mangaId);
-      accion = "eliminado";
-    } else {
-      // Si no está, agregarlo
-      lista_Fav.push(new ObjectId(mangaId));
-      accion = "añadido";
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
     }
 
-    // Actualizar en la base de datos
-    await login.updateOne(
-      { _id: new ObjectId(usuarioId) },
-      { $set: { lista_Fav } }
+    let capitulos_vistos = usuario.capitulos_vistos || [];
+
+    const index = capitulos_vistos.findIndex(
+      cv => cv.mangaId === mangaId && cv.tomo === tomo
     );
 
-    res.json({ mensaje: `Manga ${accion} a favoritos`, lista_Fav });
+    if (visto) {
+      if (index > -1) {
+        capitulos_vistos[index].visto = true;
+      } else {
+        capitulos_vistos.push({ mangaId, tomo, visto: true });
+      }
+    } else {
+      if (index > -1) {
+        capitulos_vistos.splice(index, 1);
+      }
+    }
 
+    await login.updateOne(
+      { _id: new ObjectId(usuarioId) },
+      { $set: { capitulos_vistos } }
+    );
+
+    res.json({ mensaje: "Actualizado", capitulos_vistos });
   } catch (error) {
-    console.error("Error en gustarManga:", error.message);
-    res.status(500).json({ mensaje: "Error interno del servidor" });
+    console.error("Error:", error.message);
+    res.status(500).json({ mensaje: "Error interno" });
   }
 });
 
