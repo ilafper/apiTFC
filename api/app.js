@@ -99,10 +99,9 @@ app.post('/api/registrarse', async (req, res) => {
       nombre: nombre,
       email: email,
       contrasenha: password1,
-      rol: "user", // ← Rol por defecto
-      lista_Fav: [], // ← Inicializar arrays
-      capitulos_vistos: [], // ← Inicializar arrays
-      fecha_creacion: new Date() // ← Fecha de creación
+      rol: "user",
+      lista_Fav: [], 
+      capitulos_vistos: [],
     };
 
     const resultado = await login.insertOne(nuevoUser);
