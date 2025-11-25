@@ -68,39 +68,65 @@ app.post('/api/checkLogin', async (req, res) => {
 });
 
 
-// app.post('/api/registrarse', async (req, res) => {
-//   try {
-//     const { nombre, email, password1} = req.body;
+app.post('/api/registrarse', async (req, res) => {
+  try {
+    const { nombre, email, password1 } = req.body;
 
-//     // Validación básica
-//     if (!nombre || !email || !password1) {
-//       return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
-//     }
+    // Validación básica
+    if (!nombre || !email || !password1) {
+      return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
+    }
 
-//     // Conectar a la base de datos y acceder a la colección
-//     const { login } = await connectToMongoDB();
+    // Conectar a la base de datos y acceder a la colección
+    const { login } = await connectToMongoDB();
 
-//     // Crear el nuevo especialista
-//     const nuevoUser = {
-//       nombre:nombre,
-//       email:email,
-//       contrasenha:password1,
-//       lista_Fav: [],               // ← Inicializar arrays
-//       capitulos_vistos: []         // ← NUEVO
-//     };
+    // Verificar si el usuario ya existe
+    const usuarioExistente = await login.findOne({ 
+      $or: [
+        { nombre: nombre },
+        { email: email }
+      ]
+    });
 
-//     await login.insertOne(nuevoUser);
+    if (usuarioExistente) {
+      return res.status(400).json({ 
+        mensaje: "El nombre de usuario o email ya está en uso" 
+      });
+    }
 
-//     res.status(201).json({ mensaje: "Usuario creado correctamente" });
-//   } catch (error) {
-//     console.error("Error al crear el usuario:", error);
-//     res.status(500).json({ mensaje: "Error al crear el usuario" });
-//   }
-// });
+    // Crear el nuevo usuario
+    const nuevoUser = {
+      nombre: nombre,
+      email: email,
+      contrasenha: password1,
+      rol: "user", // ← Rol por defecto
+      lista_Fav: [], // ← Inicializar arrays
+      capitulos_vistos: [], // ← Inicializar arrays
+      fecha_creacion: new Date() // ← Fecha de creación
+    };
 
-// ============================================
-// ENDPOINT: OBTENER TODOS LOS MANGAS
-// ============================================
+    const resultado = await login.insertOne(nuevoUser);
+
+    res.status(201).json({ 
+      success: true,
+      mensaje: "Usuario creado correctamente",
+      usuario: {
+        _id: resultado.insertedId,
+        nombre: nombre,
+        email: email,
+        rol: "user"
+      }
+    });
+  } catch (error) {
+    console.error("Error al crear el usuario:", error);
+    res.status(500).json({ 
+      success: false,
+      mensaje: "Error al crear el usuario" 
+    });
+  }
+});
+
+
 app.get('/api/mangas', async (req, res) => {
   try {
     const { mangas } = await connectToMongoDB();
@@ -113,9 +139,7 @@ app.get('/api/mangas', async (req, res) => {
 
 
 
-// ============================================
-// ENDPOINT: BUSCAR MANGAS
-// ============================================
+
 app.get('/api/mangas/buscar', async (req, res) => {
   try {
     const { nombre } = req.query;
