@@ -13,9 +13,6 @@ const client = new MongoClient(uri, {
   }
 });
 
-
-
-
 async function connectToMongoDB() {
   try {
     await client.connect();
@@ -55,6 +52,7 @@ app.post('/api/checkLogin', async (req, res) => {
       res.json({
         usuario: {
           nombre: usuarioEncontrado.nombre,
+          rol:usuarioEncontrado.rol || 'user',
           email: usuarioEncontrado.email,
           _id: usuarioEncontrado._id,
           lista_Fav: usuarioEncontrado.lista_Fav || []
@@ -99,7 +97,6 @@ app.post('/api/checkLogin', async (req, res) => {
 //     console.error("Error al crear el especialista:", error);
 //     res.status(500).json({ mensaje: "Error al crear el especialista" });
 //   }
-
 // });
 
 app.get('/api/mangas', async (req, res) => {
