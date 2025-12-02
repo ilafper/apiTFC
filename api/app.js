@@ -252,7 +252,7 @@ app.post('/api/marcarCapituloVisto', async (req, res) => {
 });
 
 
-// En tu backend (Node.js/Express)
+
 app.post('/api/nuevomanga', async (req, res) => {
   try {
     const mangaData = req.body; // Recibe todos los datos del formulario
