@@ -72,7 +72,6 @@ app.post('/api/registrarse', async (req, res) => {
   try {
     const { nombre, email, password1 } = req.body;
 
-    // Validación básica
     if (!nombre || !email || !password1) {
       return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
     }
@@ -126,6 +125,11 @@ app.post('/api/registrarse', async (req, res) => {
 });
 
 
+
+
+
+
+
 app.get('/api/mangas', async (req, res) => {
   try {
     const { mangas } = await connectToMongoDB();
@@ -163,7 +167,7 @@ app.get('/api/mangas/buscar', async (req, res) => {
 
 app.post('/api/gustarManga', async (req, res) => {
   try {
-    const { usuarioId, manga } = req.body; // ← CAMBIO: 'manga' en lugar de 'mangaId'
+    const { usuarioId, manga } = req.body;
 
     if (!usuarioId || !manga) {
       return res.status(400).json({ mensaje: "Faltan datos (usuarioId, manga)" });
@@ -246,6 +250,38 @@ app.post('/api/marcarCapituloVisto', async (req, res) => {
     res.status(500).json({ mensaje: "Error interno" });
   }
 });
+
+
+// En tu backend (Node.js/Express)
+app.post('/api/nuevomanga', async (req, res) => {
+  try {
+    const mangaData = req.body; // Recibe todos los datos del formulario
+    
+    console.log('Recibiendo datos del manga:', mangaData);
+    
+    const { mangas } = await connectToMongoDB();
+
+    // Insertar el nuevo manga en la base de datos
+    const result = await mangas.insertOne(mangaData);
+    
+    console.log('Manga insertado con ID:', result.insertedId);
+    
+    res.json({ 
+      success: true,
+      mensaje: "Manga creado exitosamente", 
+      id: result.insertedId
+    });
+    
+  } catch (error) {
+    console.error("Error al crear manga:", error.message);
+    res.status(500).json({ 
+      success: false,
+      mensaje: "Error interno del servidor al crear el manga" 
+    });
+  }
+});
+
+
 
 
 module.exports = app;
