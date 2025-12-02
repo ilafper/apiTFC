@@ -255,7 +255,7 @@ app.post('/api/marcarCapituloVisto', async (req, res) => {
 
 app.post('/api/nuevomanga', async (req, res) => {
   try {
-    const mangaData = req.body; // Recibe todos los datos del formulario
+    const mangaData = req.body;
     
     console.log('Recibiendo datos del manga:', mangaData);
     
