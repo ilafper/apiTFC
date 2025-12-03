@@ -253,6 +253,7 @@ app.post('/api/marcarCapituloVisto', async (req, res) => {
 
 
 
+
 app.post('/api/nuevomanga', async (req, res) => {
   try {
     const mangaData = req.body;
@@ -280,6 +281,38 @@ app.post('/api/nuevomanga', async (req, res) => {
     });
   }
 });
+
+
+
+
+//endpoint de borrar manga, en los mangas y la parte de favoritos
+app.delete('/api/borrarmanga/:id', async (req, res) => {
+  try {
+    const idEliminarManga = req.params.id;
+    console.log("ID recibido para eliminar:", idEliminarManga);
+
+    const { mangas } = await connectToMongoDB();
+    const result = await mangas.deleteOne({ _id: new ObjectId(idEliminarManga) });  
+    
+    const { login } = await connectToMongoDB();
+    await login.updateMany(
+      {},
+      { $pull: { lista_Fav: { _id: new ObjectId(idEliminarManga) } } }
+    );
+    
+    res.json({ 
+      mensaje: "Manga eliminado correctamente", 
+      eliminados: result.deletedCount 
+    });
+    
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ mensaje: "Error interno", error: error.message });
+  }
+});
+
+
+
 
 
 
