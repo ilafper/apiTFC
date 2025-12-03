@@ -4,7 +4,7 @@ const { ObjectId } = require('mongodb');
 //añadido lo de cors
 
 
-const cors = require('cors');
+//const cors = require('cors');
 const app = express();
 app.use(express.json());
 
@@ -18,11 +18,11 @@ const client = new MongoClient(uri, {
 });
 
 
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// app.use(cors({
+//   origin: '*',
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization']
+// }));
 
 
 async function connectToMongoDB() {
