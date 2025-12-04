@@ -1,12 +1,16 @@
 const express = require('express');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const { ObjectId } = require('mongodb');
-//añadido lo de cors
-
-
-//const cors = require('cors');
+const cors = require('cors');
 const app = express();
 app.use(express.json());
+
+
+app.use(cors({
+  origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 const uri = "mongodb+srv://ialfper:ialfper21@alumnos.zoinj.mongodb.net/alumnos?retryWrites=true&w=majority";
 const client = new MongoClient(uri, {
@@ -16,14 +20,6 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-
-
-// app.use(cors({
-//   origin: '*',
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization']
-// }));
-
 
 async function connectToMongoDB() {
   try {
@@ -40,15 +36,13 @@ async function connectToMongoDB() {
   }
 }
 
-// CONFIGURACIÓN COMPLETA DE CORS
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
 });
 
-// Resto de tu código sigue igual...
 app.post('/api/checkLogin', async (req, res) => {
   try {
     const { nombre, password } = req.body;
@@ -65,11 +59,11 @@ app.post('/api/checkLogin', async (req, res) => {
       res.json({
         usuario: {
           nombre: usuarioEncontrado.nombre,
-          rol: usuarioEncontrado.rol || 'user',
+          rol:usuarioEncontrado.rol || 'user',
           email: usuarioEncontrado.email,
           _id: usuarioEncontrado._id,
           lista_Fav: usuarioEncontrado.lista_Fav || [],
-          capitulos_vistos: usuarioEncontrado.capitulos_vistos || []
+          capitulos_vistos: usuarioEncontrado.capitulos_vistos || [] // ← NUEVO
         }
       });
     } else {
@@ -81,8 +75,225 @@ app.post('/api/checkLogin', async (req, res) => {
   }
 });
 
-// ... resto de tus endpoints ...
 
+app.post('/api/registrarse', async (req, res) => {
+  try {
+    const { nombre, email, password1 } = req.body;
+
+    if (!nombre || !email || !password1) {
+      return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
+    }
+
+    // Conectar a la base de datos y acceder a la colección
+    const { login } = await connectToMongoDB();
+
+    //buscar si hay otro igual
+    const usuarioExistente = await login.findOne({ 
+      $or: [
+        { nombre: nombre },
+        { email: email }
+      ]
+    });
+
+    if (usuarioExistente) {
+      return res.status(400).json({ 
+        mensaje: "El nombre de usuario o email ya está en uso" 
+      });
+    }
+
+    // Crear el nuevo usuario
+    const nuevoUser = {
+      nombre: nombre,
+      email: email,
+      contrasenha: password1,
+      rol: "user",
+      lista_Fav: [], 
+      capitulos_vistos: [],
+    };
+
+    const resultado = await login.insertOne(nuevoUser);
+
+    res.status(201).json({ 
+      success: true,
+      mensaje: "Usuario creado correctamente",
+      usuario: {
+        _id: resultado.insertedId,
+        nombre: nombre,
+        email: email,
+        rol: "user"
+      }
+    });
+  } catch (error) {
+    console.error("Error al crear el usuario:", error);
+    res.status(500).json({ 
+      success: false,
+      mensaje: "Error al crear el usuario" 
+    });
+  }
+});
+
+
+
+
+
+
+
+app.get('/api/mangas', async (req, res) => {
+  try {
+    const { mangas } = await connectToMongoDB();
+    const lista_mangas = await mangas.find().toArray();
+    res.json(lista_mangas);
+  } catch (error) {
+    res.status(500).json({ error: 'Error al obtener los mangas' });
+  }
+});
+
+
+
+
+app.get('/api/mangas/buscar', async (req, res) => {
+  try {
+    const { nombre } = req.query;
+
+    if (!nombre || typeof nombre !== 'string' || nombre.trim() === '') {
+      return res.status(200).json([]);
+    }
+
+    const { mangas } = await connectToMongoDB();
+
+    const filtro = { nombre: { $regex: nombre.trim(), $options: 'i' } };
+    const resultados = await mangas.find(filtro).toArray();
+
+    return res.status(200).json(resultados);
+  } catch (error) {
+    console.error('Error al buscar mangas:', error);
+    return res.status(500).json({ mensaje: 'Error interno al buscar mangas' });
+  }
+});
+
+
+
+app.post('/api/gustarManga', async (req, res) => {
+  try {
+    const { usuarioId, manga } = req.body;
+
+    if (!usuarioId || !manga) {
+      return res.status(400).json({ mensaje: "Faltan datos (usuarioId, manga)" });
+    }
+
+    const { login } = await connectToMongoDB();
+    const usuario = await login.findOne({ _id: new ObjectId(usuarioId) });
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
+    }
+
+    let lista_Fav = usuario.lista_Fav || [];
+    let capitulos_vistos = usuario.capitulos_vistos || [];
+
+    // Buscar por _id del manga (objeto completo)
+    const index = lista_Fav.findIndex(fav => {
+      const favId = typeof fav === 'object' && fav._id ? fav._id.toString() : fav.toString();
+      return favId === manga._id.toString();
+    });
+
+    if (index > -1) {
+      lista_Fav.splice(index, 1);
+    } else {
+      lista_Fav.push(manga); // ← Guardar objeto completo
+    }
+
+    await login.updateOne(
+      { _id: new ObjectId(usuarioId) },
+      { $set: { lista_Fav, capitulos_vistos } }
+    );
+
+    res.json({ mensaje: "Actualizado", lista_Fav, capitulos_vistos });
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ mensaje: "Error interno" });
+  }
+});
+
+
+app.post('/api/marcarCapituloVisto', async (req, res) => {
+  try {
+    const { usuarioId, mangaId, tomo, visto } = req.body;
+
+    if (!usuarioId || !mangaId || tomo === undefined || visto === undefined) {
+      return res.status(400).json({ mensaje: "Faltan datos" });
+    }
+
+    const { login } = await connectToMongoDB();
+    const usuario = await login.findOne({ _id: new ObjectId(usuarioId) });
+    if (!usuario) {
+      return res.status(404).json({ mensaje: "Usuario no encontrado" });
+    }
+
+    let capitulos_vistos = usuario.capitulos_vistos || [];
+
+    const index = capitulos_vistos.findIndex(
+      cv => cv.mangaId === mangaId && cv.tomo === tomo
+    );
+
+    if (visto) {
+      if (index > -1) {
+        capitulos_vistos[index].visto = true;
+      } else {
+        capitulos_vistos.push({ mangaId, tomo, visto: true });
+      }
+    } else {
+      if (index > -1) {
+        capitulos_vistos.splice(index, 1);
+      }
+    }
+
+    await login.updateOne(
+      { _id: new ObjectId(usuarioId) },
+      { $set: { capitulos_vistos } }
+    );
+
+    res.json({ mensaje: "Actualizado", capitulos_vistos });
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ mensaje: "Error interno" });
+  }
+});
+
+
+
+
+app.post('/api/nuevomanga', async (req, res) => {
+  try {
+    const mangaData = req.body;
+    
+    console.log('Recibiendo datos del manga:', mangaData);
+    
+    const { mangas } = await connectToMongoDB();
+
+    // Insertar el nuevo manga en la base de datos
+    const result = await mangas.insertOne(mangaData);
+    
+    console.log('Manga insertado con ID:', result.insertedId);
+    
+    res.json({ 
+      success: true,
+      mensaje: "Manga creado exitosamente", 
+      id: result.insertedId
+    });
+    
+  } catch (error) {
+    console.error("Error al crear manga:", error.message);
+    res.status(500).json({ 
+      success: false,
+      mensaje: "Error interno del servidor al crear el manga" 
+    });
+  }
+});
+
+
+
+
+//endpoint de borrar manga, en los mangas y la parte de favoritos
 app.delete('/api/borrarmanga/:id', async (req, res) => {
   try {
     const idEliminarManga = req.params.id;
@@ -107,5 +318,11 @@ app.delete('/api/borrarmanga/:id', async (req, res) => {
     res.status(500).json({ mensaje: "Error interno", error: error.message });
   }
 });
+
+
+
+
+
+
 
 module.exports = app;
