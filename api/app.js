@@ -295,7 +295,7 @@ app.post('/api/nuevomanga', async (req, res) => {
 
 
 //endpoint de borrar manga, en los mangas y la parte de favoritos
-app.delete('/api/borrarmanga', async (req, res) => {
+app.delete('/api/borrarmanga/:id', async (req, res) => {
   try {
     const idEliminarManga = req.params.id;
     console.log("ID recibido para eliminar:", idEliminarManga);
