@@ -127,12 +127,6 @@ app.post('/api/registrarse', async (req, res) => {
   }
 });
 
-
-
-
-
-
-
 app.get('/api/mangas', async (req, res) => {
   try {
     const { mangas } = await connectToMongoDB();
