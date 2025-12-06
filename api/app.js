@@ -10,14 +10,36 @@ const app = express();
 
 // ========== MIDDLEWARES BÁSICOS ==========
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // IMPORTANTE para FormData
+app.use(express.urlencoded({ extended: true }));
 
-// ========== CORS ==========
-app.use(cors({
+// ========== CORS ESPECÍFICO PARA VERCEL ==========
+// Configuración más completa para Vercel
+const corsOptions = {
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+
+// Middleware adicional para CORS headers
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  
+  // Manejar preflight OPTIONS
+  if (req.method === 'OPTIONS') {
+    console.log('✅ Preflight OPTIONS request');
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 // ========== FUNCIÓN PARA ENCONTRAR CARPETA src ==========
 function encontrarCarpetaSrc() {
@@ -34,9 +56,9 @@ function encontrarCarpetaSrc() {
     }
   }
   
-  // Si no la encuentra, crear una en el directorio actual
-  const rutaDefault = path.join(__dirname, 'uploads');
-  console.log(`⚠️ No se encontró src, creando: ${rutaDefault}`);
+  // En Vercel, usa /tmp para archivos temporales
+  const rutaDefault = '/tmp/uploads';
+  console.log(`⚠️ No se encontró src, usando: ${rutaDefault}`);
   
   if (!fs.existsSync(rutaDefault)) {
     fs.mkdirSync(rutaDefault, { recursive: true });
@@ -45,18 +67,15 @@ function encontrarCarpetaSrc() {
   return rutaDefault;
 }
 
-// ========== CONFIGURACIÓN MULTER ==========
-// 1. PRIMERO encontrar carpeta
+// ========== CONFIGURACIÓN MULTER (VERCEL) ==========
 const carpetaSrc = encontrarCarpetaSrc();
 console.log(`📁 Carpeta de destino para imágenes: ${carpetaSrc}`);
 
-// 2. LUEGO definir storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, carpetaSrc);
   },
   filename: function (req, file, cb) {
-    // Para evitar sobreescritura: nombre-timestamp.extensión
     const originalName = path.parse(file.originalname).name;
     const extension = path.extname(file.originalname);
     const timestamp = Date.now();
@@ -67,10 +86,9 @@ const storage = multer.diskStorage({
   }
 });
 
-// 3. FINALMENTE crear upload con storage
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: function(req, file, cb) {
     const allowedTypes = /jpeg|jpg|png|gif|webp/;
     const mimetype = allowedTypes.test(file.mimetype);
@@ -82,6 +100,7 @@ const upload = multer({
     cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, gif, webp)'));
   }
 });
+
 
 const uri = "mongodb+srv://ialfper:ialfper21@alumnos.zoinj.mongodb.net/alumnos?retryWrites=true&w=majority";
 const client = new MongoClient(uri, {
