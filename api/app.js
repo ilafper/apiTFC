@@ -341,42 +341,14 @@ app.post('/api/marcarCapituloVisto', async (req, res) => {
 
 //prueba manga nuevo con imagen
 app.post('/api/nuevomanga', upload.single('imagen'), async (req, res) => {
-  console.log('🔵 === INICIO /api/nuevomanga ===');
-  
   try {
     console.log('📄 Archivo recibido:', req.file ? req.file.filename : 'Ninguno');
     console.log('📋 Datos del body:', req.body);
     
     let mangaData = req.body;
     
-    if (req.file) {
-      mangaData.imagen = req.file.filename;
-      console.log('✅ Imagen asignada:', mangaData.imagen);
-    } else {
-      mangaData.imagen = 'default-manga.png';
-      console.log('⚠️ No se recibió imagen, usando por defecto');
-    }
-    
-    // Parsear datos
-    if (typeof mangaData.genero === 'string') {
-      try {
-        mangaData.genero = JSON.parse(mangaData.genero);
-      } catch (e) {
-        mangaData.genero = [];
-      }
-    }
-    
-    if (typeof mangaData.temporadas === 'string') {
-      try {
-        mangaData.temporadas = JSON.parse(mangaData.temporadas);
-      } catch (e) {
-        mangaData.temporadas = [];
-      }
-    }
-    
     mangaData.volumenes = parseInt(mangaData.volumenes) || 0;
     mangaData.capitulos = parseInt(mangaData.capitulos) || 0;
-    mangaData.fecha_creacion = new Date();
     
     const { mangas } = await connectToMongoDB();
     const result = await mangas.insertOne(mangaData);
