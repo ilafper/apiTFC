@@ -5,34 +5,52 @@ const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+
 const app = express();
+
+// ========== MIDDLEWARES BÁSICOS ==========
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // IMPORTANTE para FormData
 
+// ========== CORS ==========
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-
-
-
-
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: function(req, file, cb) {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const mimetype = allowedTypes.test(file.mimetype);
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    
-    if (mimetype && extname) {
-      return cb(null, true);
+// ========== FUNCIÓN PARA ENCONTRAR CARPETA src ==========
+function encontrarCarpetaSrc() {
+  const posiblesNombres = ['src', 'cliente/src', 'frontend/src', 'public/src'];
+  const bases = [__dirname, process.cwd(), path.join(__dirname, '..')];
+  
+  for (const base of bases) {
+    for (const nombre of posiblesNombres) {
+      const ruta = path.join(base, nombre);
+      if (fs.existsSync(ruta)) {
+        console.log(`✓ Encontrada carpeta src en: ${ruta}`);
+        return ruta;
+      }
     }
-    cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, gif, webp)'));
   }
-});
+  
+  // Si no la encuentra, crear una en el directorio actual
+  const rutaDefault = path.join(__dirname, 'uploads');
+  console.log(`⚠️ No se encontró src, creando: ${rutaDefault}`);
+  
+  if (!fs.existsSync(rutaDefault)) {
+    fs.mkdirSync(rutaDefault, { recursive: true });
+  }
+  
+  return rutaDefault;
+}
 
-
-
-
+// ========== CONFIGURACIÓN MULTER ==========
+// 1. PRIMERO encontrar carpeta
 const carpetaSrc = encontrarCarpetaSrc();
+console.log(`📁 Carpeta de destino para imágenes: ${carpetaSrc}`);
 
+// 2. LUEGO definir storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, carpetaSrc);
@@ -49,21 +67,21 @@ const storage = multer.diskStorage({
   }
 });
 
-
-
-
-
-
-
-
-
-
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
+// 3. FINALMENTE crear upload con storage
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: function(req, file, cb) {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const mimetype = allowedTypes.test(file.mimetype);
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, gif, webp)'));
+  }
+});
 
 const uri = "mongodb+srv://ialfper:ialfper21@alumnos.zoinj.mongodb.net/alumnos?retryWrites=true&w=majority";
 const client = new MongoClient(uri, {
@@ -304,28 +322,27 @@ app.post('/api/marcarCapituloVisto', async (req, res) => {
 
 //prueba manga nuevo con imagen
 app.post('/api/nuevomanga', upload.single('imagen'), async (req, res) => {
+  console.log('🔵 === INICIO /api/nuevomanga ===');
+  
   try {
-    console.log('=== RECIBIENDO NUEVO MANGA ===');
-    console.log('Archivo recibido:', req.file ? req.file.filename : 'Ninguno');
-    console.log('Datos del formulario:', req.body);
+    console.log('📄 Archivo recibido:', req.file ? req.file.filename : 'Ninguno');
+    console.log('📋 Datos del body:', req.body);
     
     let mangaData = req.body;
     
-    // 1. Procesar la imagen si existe
     if (req.file) {
-      mangaData.imagen = req.file.filename; // Ej: "onepiece-1700000000000.jpg"
-      console.log('✓ Imagen asignada:', mangaData.imagen);
+      mangaData.imagen = req.file.filename;
+      console.log('✅ Imagen asignada:', mangaData.imagen);
     } else {
       mangaData.imagen = 'default-manga.png';
       console.log('⚠️ No se recibió imagen, usando por defecto');
     }
     
-    // 2. Parsear datos que vienen como strings JSON
+    // Parsear datos
     if (typeof mangaData.genero === 'string') {
       try {
         mangaData.genero = JSON.parse(mangaData.genero);
       } catch (e) {
-        console.log('Error parseando géneros');
         mangaData.genero = [];
       }
     }
@@ -334,33 +351,18 @@ app.post('/api/nuevomanga', upload.single('imagen'), async (req, res) => {
       try {
         mangaData.temporadas = JSON.parse(mangaData.temporadas);
       } catch (e) {
-        console.log('Error parseando temporadas');
         mangaData.temporadas = [];
       }
     }
     
-    // 3. Convertir números
     mangaData.volumenes = parseInt(mangaData.volumenes) || 0;
     mangaData.capitulos = parseInt(mangaData.capitulos) || 0;
-    
-    // 4. Agregar fecha de creación
     mangaData.fecha_creacion = new Date();
     
-    console.log('✓ Datos finales para MongoDB:', {
-      nombre: mangaData.nombre,
-      autor: mangaData.autor,
-      imagen: mangaData.imagen,
-      volumenes: mangaData.volumenes,
-      capitulos: mangaData.capitulos
-    });
-    
     const { mangas } = await connectToMongoDB();
-    
-    // 5. Insertar en MongoDB
     const result = await mangas.insertOne(mangaData);
     
-    console.log('✓ Manga insertado con ID:', result.insertedId);
-    console.log('================================');
+    console.log('✅ Manga insertado con ID:', result.insertedId);
     
     res.json({ 
       success: true,
@@ -370,27 +372,15 @@ app.post('/api/nuevomanga', upload.single('imagen'), async (req, res) => {
     });
     
   } catch (error) {
-    console.error("✗ Error al crear manga:", error.message);
+    console.error("❌ Error en /api/nuevomanga:", error.message);
+    console.error("Stack:", error.stack);
     
-    // Manejar errores específicos de multer
     if (error instanceof multer.MulterError) {
-      if (error.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ 
-          success: false,
-          mensaje: 'La imagen es demasiado grande. Máximo 5MB' 
-        });
-      }
       return res.status(400).json({ 
         success: false,
-        mensaje: 'Error al subir la imagen' 
-      });
-    }
-    
-    // Error de validación de tipo de archivo
-    if (error.message.includes('Solo se permiten imágenes')) {
-      return res.status(400).json({ 
-        success: false,
-        mensaje: error.message 
+        mensaje: error.code === 'LIMIT_FILE_SIZE' 
+          ? 'La imagen es demasiado grande. Máximo 5MB' 
+          : 'Error al subir la imagen'
       });
     }
     
