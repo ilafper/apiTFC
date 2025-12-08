@@ -12,7 +12,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ========== CORS ESPECÍFICO PARA VERCEL ==========
+
+
 // Configuración más completa para Vercel
 const corsOptions = {
   origin: '*',
@@ -412,8 +413,39 @@ app.delete('/api/borrarmanga/:id', async (req, res) => {
 });
 
 
-
-
+//editar manga
+app.put('/api/editarmanga/:id', async (req, res) => {
+    try {
+        const mangaId = req.params.id;
+        const datosActualizados = req.body;
+        const { mangas } = await connectToMongoDB();
+        // Actualizar en MongoDB
+        const result = await db.collection('mangasPrueba').updateOne(
+            { _id: new ObjectId(mangaId) },
+            { $set: datosActualizados }
+        );
+        
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Manga no encontrado o sin cambios' 
+            });
+        }
+        
+        res.json({
+            success: true,
+            mensaje: 'Manga actualizado exitosamente',
+            modificados: result.modifiedCount
+        });
+        
+    } catch (error) {
+        console.error('Error al actualizar:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: error.message 
+        });
+    }
+});
 
 
 
