@@ -2,8 +2,8 @@ const express = require('express');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const { ObjectId } = require('mongodb');
 const cors = require('cors');
-const multer = require('multer');
-const path = require('path');
+// const multer = require('multer');
+// const path = require('path');
 const fs = require('fs');
 
 const app = express();
@@ -42,65 +42,65 @@ app.use((req, res, next) => {
   next();
 });
 
-// ========== FUNCIÓN PARA ENCONTRAR CARPETA src ==========
-function encontrarCarpetaSrc() {
-  const posiblesNombres = ['src', 'cliente/src', 'frontend/src', 'public/src'];
-  const bases = [__dirname, process.cwd(), path.join(__dirname, '..')];
+// // ========== FUNCIÓN PARA ENCONTRAR CARPETA src ==========
+// function encontrarCarpetaSrc() {
+//   const posiblesNombres = ['src', 'cliente/src', 'frontend/src', 'public/src'];
+//   const bases = [__dirname, process.cwd(), path.join(__dirname, '..')];
   
-  for (const base of bases) {
-    for (const nombre of posiblesNombres) {
-      const ruta = path.join(base, nombre);
-      if (fs.existsSync(ruta)) {
-        console.log(`✓ Encontrada carpeta src en: ${ruta}`);
-        return ruta;
-      }
-    }
-  }
+//   for (const base of bases) {
+//     for (const nombre of posiblesNombres) {
+//       const ruta = path.join(base, nombre);
+//       if (fs.existsSync(ruta)) {
+//         console.log(`✓ Encontrada carpeta src en: ${ruta}`);
+//         return ruta;
+//       }
+//     }
+//   }
   
-  // En Vercel, usa /tmp para archivos temporales
-  const rutaDefault = '/tmp/uploads';
-  console.log(`⚠️ No se encontró src, usando: ${rutaDefault}`);
+//   // En Vercel, usa /tmp para archivos temporales
+//   const rutaDefault = '/tmp/uploads';
+//   console.log(`⚠️ No se encontró src, usando: ${rutaDefault}`);
   
-  if (!fs.existsSync(rutaDefault)) {
-    fs.mkdirSync(rutaDefault, { recursive: true });
-  }
+//   if (!fs.existsSync(rutaDefault)) {
+//     fs.mkdirSync(rutaDefault, { recursive: true });
+//   }
   
-  return rutaDefault;
-}
+//   return rutaDefault;
+// }
 
-// ========== CONFIGURACIÓN MULTER (VERCEL) ==========
-const carpetaSrc = encontrarCarpetaSrc();
-console.log(`📁 Carpeta de destino para imágenes: ${carpetaSrc}`);
+// // ========== CONFIGURACIÓN MULTER (VERCEL) ==========
+// const carpetaSrc = encontrarCarpetaSrc();
+// console.log(`📁 Carpeta de destino para imágenes: ${carpetaSrc}`);
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, carpetaSrc);
-  },
-  filename: function (req, file, cb) {
-    const originalName = path.parse(file.originalname).name;
-    const extension = path.extname(file.originalname);
-    const timestamp = Date.now();
-    const finalName = `${originalName}-${timestamp}${extension}`;
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, carpetaSrc);
+//   },
+//   filename: function (req, file, cb) {
+//     const originalName = path.parse(file.originalname).name;
+//     const extension = path.extname(file.originalname);
+//     const timestamp = Date.now();
+//     const finalName = `${originalName}-${timestamp}${extension}`;
     
-    console.log(`✓ Guardando imagen como: ${finalName}`);
-    cb(null, finalName);
-  }
-});
+//     console.log(`✓ Guardando imagen como: ${finalName}`);
+//     cb(null, finalName);
+//   }
+// });
 
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: function(req, file, cb) {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const mimetype = allowedTypes.test(file.mimetype);
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+// const upload = multer({
+//   storage: storage,
+//   limits: { fileSize: 5 * 1024 * 1024 },
+//   fileFilter: function(req, file, cb) {
+//     const allowedTypes = /jpeg|jpg|png|gif|webp/;
+//     const mimetype = allowedTypes.test(file.mimetype);
+//     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
     
-    if (mimetype && extname) {
-      return cb(null, true);
-    }
-    cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, gif, webp)'));
-  }
-});
+//     if (mimetype && extname) {
+//       return cb(null, true);
+//     }
+//     cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, gif, webp)'));
+//   }
+// });
 
 
 const uri = "mongodb+srv://ialfper:ialfper21@alumnos.zoinj.mongodb.net/alumnos?retryWrites=true&w=majority";
@@ -422,7 +422,7 @@ app.put('/api/editarmanga/:id', async (req, res) => {
         const { mangas } = await connectToMongoDB();
 
 
-        
+
         // Validar que el ID sea válido
         if (!ObjectId.isValid(mangaId)) {
             return res.status(400).json({ 
