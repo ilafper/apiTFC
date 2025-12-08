@@ -415,22 +415,16 @@ app.delete('/api/borrarmanga/:id', async (req, res) => {
 
 //editar manga - CORREGIDO
 app.put('/api/editarmanga/:id', async (req, res) => {
-    console.log("✏️ PUT /api/editarmanga/:id");
     
     try {
         const mangaId = req.params.id;
         const datosActualizados = req.body;
-        
-        console.log("📝 ID:", mangaId);
-        console.log("📝 Datos recibidos:", datosActualizados);
-        
-        // Conectar a MongoDB - OBTENER LA COLECCIÓN DIRECTAMENTE
         const { mangas } = await connectToMongoDB();
-        console.log("✅ Colección 'mangas' obtenida");
+
+
         
         // Validar que el ID sea válido
         if (!ObjectId.isValid(mangaId)) {
-            console.log("❌ ID no válido:", mangaId);
             return res.status(400).json({ 
                 success: false, 
                 error: 'ID de manga no válido' 
@@ -443,13 +437,13 @@ app.put('/api/editarmanga/:id', async (req, res) => {
             { $set: datosActualizados }
         );
         
-        console.log("📊 Resultado MongoDB:", {
+        console.log("Resultado MongoDB:", {
             matched: result.matchedCount,
             modified: result.modifiedCount
         });
         
         if (result.matchedCount === 0) {
-            console.log("⚠️ No se encontró el manga con ID:", mangaId);
+            console.log("No se encontró el manga con ID:", mangaId);
             return res.status(404).json({ 
                 success: false, 
                 error: 'Manga no encontrado' 
@@ -457,14 +451,13 @@ app.put('/api/editarmanga/:id', async (req, res) => {
         }
         
         if (result.modifiedCount === 0) {
-            console.log("ℹ️ Manga encontrado pero sin cambios");
+            console.log("Manga encontrado pero sin cambios");
         }
-        
-        console.log("✅ Manga actualizado exitosamente");
+      
         
         res.json({
             success: true,
-            mensaje: 'Manga actualizado exitosamente',
+            mensaje: 'Sisii actualizado',
             modificados: result.modifiedCount,
             matched: result.matchedCount
         });
