@@ -5,13 +5,13 @@ const cors = require('cors');
 // const multer = require('multer');
 // const path = require('path');
 const app = express();
-// ========== MIDDLEWARES BÁSICOS ==========
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 
 
-// Configuración más completa para Vercel
+
 const corsOptions = {
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -23,21 +23,21 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Middleware adicional para CORS headers
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
-  res.header('Access-Control-Allow-Credentials', 'true');
+// // Middleware adicional para CORS headers
+// app.use((req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', '*');
+//   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+//   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
+//   res.header('Access-Control-Allow-Credentials', 'true');
   
-  // Manejar preflight OPTIONS
-  if (req.method === 'OPTIONS') {
-    console.log('✅ Preflight OPTIONS request');
-    return res.status(200).end();
-  }
+//   // Manejar preflight OPTIONS
+//   if (req.method === 'OPTIONS') {
+//     console.log('✅ Preflight OPTIONS request');
+//     return res.status(200).end();
+//   }
   
-  next();
-});
+//   next();
+// });
 
 // // ========== FUNCIÓN PARA ENCONTRAR CARPETA src ==========
 // function encontrarCarpetaSrc() {
