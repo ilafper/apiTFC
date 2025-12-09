@@ -60,7 +60,7 @@ app.post('/api/checkLogin', async (req, res) => {
           email: usuarioEncontrado.email,
           _id: usuarioEncontrado._id,
           lista_Fav: usuarioEncontrado.lista_Fav || [],
-          capitulos_vistos: usuarioEncontrado.capitulos_vistos || [] // ← NUEVO
+          capitulos_vistos: usuarioEncontrado.capitulos_vistos || [] 
         }
       });
     } else {
@@ -81,10 +81,10 @@ app.post('/api/registrarse', async (req, res) => {
       return res.status(400).json({ mensaje: "Todos los campos son obligatorios" });
     }
 
-    // Conectar a la base de datos y acceder a la colección
+   
     const { login } = await connectToMongoDB();
 
-    //buscar si hay otro igual
+    
     const usuarioExistente = await login.findOne({ 
       $or: [
         { nombre: nombre },
@@ -253,41 +253,27 @@ app.post('/api/marcarCapituloVisto', async (req, res) => {
 
 
 //prueba manga nuevo con imagen
-app.post('/api/nuevomanga', upload.single('imagen'), async (req, res) => {
+app.post('/api/nuevomanga', async (req, res) => {
   try {
-    console.log('📄 Archivo recibido:', req.file ? req.file.filename : 'Ninguno');
-    console.log('📋 Datos del body:', req.body);
+    const mangaData = req.body;
     
-    let mangaData = req.body;
-    
-    mangaData.volumenes = parseInt(mangaData.volumenes) || 0;
-    mangaData.capitulos = parseInt(mangaData.capitulos) || 0;
+    console.log('Recibiendo datos del manga:', mangaData);
     
     const { mangas } = await connectToMongoDB();
+
+    // Insertar el nuevo manga en la base de datos
     const result = await mangas.insertOne(mangaData);
     
-    console.log('✅ Manga insertado con ID:', result.insertedId);
+    console.log('Manga insertado con ID:', result.insertedId);
     
     res.json({ 
       success: true,
       mensaje: "Manga creado exitosamente", 
-      id: result.insertedId,
-      imagen: mangaData.imagen
+      id: result.insertedId
     });
     
   } catch (error) {
-    console.error("❌ Error en /api/nuevomanga:", error.message);
-    console.error("Stack:", error.stack);
-    
-    if (error instanceof multer.MulterError) {
-      return res.status(400).json({ 
-        success: false,
-        mensaje: error.code === 'LIMIT_FILE_SIZE' 
-          ? 'La imagen es demasiado grande. Máximo 5MB' 
-          : 'Error al subir la imagen'
-      });
-    }
-    
+    console.error("Error al crear manga:", error.message);
     res.status(500).json({ 
       success: false,
       mensaje: "Error interno del servidor al crear el manga" 
