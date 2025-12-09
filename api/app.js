@@ -7,97 +7,12 @@ const cors = require('cors');
 const app = express();
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-
-
-
-const corsOptions = {
+app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
-  credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-};
-
-app.use(cors(corsOptions));
-
-// // Middleware adicional para CORS headers
-// app.use((req, res, next) => {
-//   res.header('Access-Control-Allow-Origin', '*');
-//   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-//   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, X-Requested-With');
-//   res.header('Access-Control-Allow-Credentials', 'true');
-  
-//   // Manejar preflight OPTIONS
-//   if (req.method === 'OPTIONS') {
-//     console.log('✅ Preflight OPTIONS request');
-//     return res.status(200).end();
-//   }
-  
-//   next();
-// });
-
-// // ========== FUNCIÓN PARA ENCONTRAR CARPETA src ==========
-// function encontrarCarpetaSrc() {
-//   const posiblesNombres = ['src', 'cliente/src', 'frontend/src', 'public/src'];
-//   const bases = [__dirname, process.cwd(), path.join(__dirname, '..')];
-  
-//   for (const base of bases) {
-//     for (const nombre of posiblesNombres) {
-//       const ruta = path.join(base, nombre);
-//       if (fs.existsSync(ruta)) {
-//         console.log(`✓ Encontrada carpeta src en: ${ruta}`);
-//         return ruta;
-//       }
-//     }
-//   }
-  
-//   // En Vercel, usa /tmp para archivos temporales
-//   const rutaDefault = '/tmp/uploads';
-//   console.log(`⚠️ No se encontró src, usando: ${rutaDefault}`);
-  
-//   if (!fs.existsSync(rutaDefault)) {
-//     fs.mkdirSync(rutaDefault, { recursive: true });
-//   }
-  
-//   return rutaDefault;
-// }
-
-// // ========== CONFIGURACIÓN MULTER (VERCEL) ==========
-// const carpetaSrc = encontrarCarpetaSrc();
-// console.log(`📁 Carpeta de destino para imágenes: ${carpetaSrc}`);
-
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, carpetaSrc);
-//   },
-//   filename: function (req, file, cb) {
-//     const originalName = path.parse(file.originalname).name;
-//     const extension = path.extname(file.originalname);
-//     const timestamp = Date.now();
-//     const finalName = `${originalName}-${timestamp}${extension}`;
-    
-//     console.log(`✓ Guardando imagen como: ${finalName}`);
-//     cb(null, finalName);
-//   }
-// });
-
-// const upload = multer({
-//   storage: storage,
-//   limits: { fileSize: 5 * 1024 * 1024 },
-//   fileFilter: function(req, file, cb) {
-//     const allowedTypes = /jpeg|jpg|png|gif|webp/;
-//     const mimetype = allowedTypes.test(file.mimetype);
-//     const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    
-//     if (mimetype && extname) {
-//       return cb(null, true);
-//     }
-//     cb(new Error('Solo se permiten imágenes (jpeg, jpg, png, gif, webp)'));
-//   }
-// });
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 
 const uri = "mongodb+srv://ialfper:ialfper21@alumnos.zoinj.mongodb.net/alumnos?retryWrites=true&w=majority";
