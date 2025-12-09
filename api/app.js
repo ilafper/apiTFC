@@ -255,7 +255,7 @@ app.post('/api/marcarCapituloVisto', async (req, res) => {
 //prueba manga nuevo con imagen
 app.post('/api/nuevomanga', async (req, res) => {
   try {
-    const mangaData = req.body;
+    const mangaNuevo = req.body;
     
     console.log('Recibiendo datos del manga:', mangaData);
     
