@@ -257,12 +257,12 @@ app.post('/api/nuevomanga', async (req, res) => {
   try {
     const mangaNuevo = req.body;
     
-    console.log('Recibiendo datos del manga:', mangaData);
+    console.log('Recibiendo datos del manga:', mangaNuevo);
     
     const { mangas } = await connectToMongoDB();
 
     // Insertar el nuevo manga en la base de datos
-    const result = await mangas.insertOne(mangaData);
+    const result = await mangas.insertOne(mangaNuevo);
     
     console.log('Manga insertado con ID:', result.insertedId);
     
